@@ -1,13 +1,21 @@
 const { OpenAI } = require("openai");
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
 module.exports = async function (context, req) {
   const mood = req.body?.mood || "chill";
 
-  context.log("Incoming mood:", mood);
+  const apiKey = process.env.OPENAI_API_KEY;
+
+  context.log("🔑 OPENAI_API_KEY is:", apiKey ? "present" : "NOT FOUND");
+
+  if (!apiKey) {
+    context.res = {
+      status: 500,
+      body: { error: "OPENAI_API_KEY is not set in environment variables." }
+    };
+    return;
+  }
+
+  const openai = new OpenAI({ apiKey });
 
   try {
     const completion = await openai.chat.completions.create({
@@ -20,7 +28,7 @@ module.exports = async function (context, req) {
     });
 
     const text = completion.choices[0].message.content;
-    context.log("GPT raw response:", text);
+    context.log("🧠 GPT raw response:", text);
 
     const playlists = JSON.parse(text);
     context.res = {
@@ -28,11 +36,11 @@ module.exports = async function (context, req) {
       body: playlists
     };
 
-  } catch (error) {
-    context.log.error("Function error:", error.message);
+  } catch (err) {
+    context.log.error("❌ Error:", err.message);
     context.res = {
       status: 500,
-      body: { error: "Something went wrong on the server." }
+      body: { error: "Something went wrong." }
     };
   }
 };
