@@ -1,24 +1,24 @@
-const { OpenAI } = require("openai");
+const { Configuration, OpenAIApi } = require("openai");
 
 module.exports = async function (context, req) {
   const mood = req.body?.mood || "chill";
 
   const apiKey = process.env.OPENAI_API_KEY;
-
-  context.log("🔑 OPENAI_API_KEY is:", apiKey ? "present" : "NOT FOUND");
+  context.log("🔑 OPENAI_API_KEY:", apiKey ? "found" : "NOT found");
 
   if (!apiKey) {
     context.res = {
       status: 500,
-      body: { error: "OPENAI_API_KEY is not set in environment variables." }
+      body: { error: "OPENAI_API_KEY not set." }
     };
     return;
   }
 
-  const openai = new OpenAI({ apiKey });
+  const configuration = new Configuration({ apiKey });
+  const openai = new OpenAIApi(configuration);
 
   try {
-    const completion = await openai.chat.completions.create({
+    const response = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
       messages: [{
         role: "user",
@@ -27,8 +27,8 @@ module.exports = async function (context, req) {
       temperature: 0.7
     });
 
-    const text = completion.choices[0].message.content;
-    context.log("🧠 GPT raw response:", text);
+    const text = response.data.choices[0].message.content;
+    context.log("🧠 GPT raw:", text);
 
     const playlists = JSON.parse(text);
     context.res = {
@@ -37,10 +37,10 @@ module.exports = async function (context, req) {
     };
 
   } catch (err) {
-    context.log.error("❌ Error:", err.message);
+    context.log("❌ GPT error:", err.message);
     context.res = {
       status: 500,
-      body: { error: "Something went wrong." }
+      body: { error: "Failed to fetch playlists." }
     };
   }
 };
