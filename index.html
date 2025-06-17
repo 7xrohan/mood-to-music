@@ -3,78 +3,142 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mood Playlist Generator</title>
+  <title>Mood-to-Music 🎵</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: sans-serif;
-      background: #1e1e1e;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
       color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
+      padding: 3rem 1rem;
+      min-height: 100vh;
     }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(90deg, #a78bfa, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #aaa;
+      margin-bottom: 2rem;
+    }
+
     input, button {
-      padding: 10px;
-      margin: 10px;
-      width: 300px;
-      font-size: 16px;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: none;
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
     }
-    .playlist {
-      margin-top: 20px;
+
+    input {
+      background-color: #2b2b2b;
+      color: #eee;
       border: 1px solid #444;
-      padding: 10px;
-      width: 320px;
-      background: #2c2c2c;
+      margin-bottom: 12px;
     }
+
+    button {
+      background-color: #8b5cf6;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    button:hover {
+      background-color: #7c3aed;
+    }
+
+    #results {
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .playlist {
+      background-color: #1e1e1e;
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      border: 1px solid #333;
+    }
+
+    .playlist strong {
+      font-size: 1.1rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+
     .playlist a {
-      color: #1db954;
+      color: #22c55e;
       text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2rem;
+      }
     }
   </style>
 </head>
 <body>
   <h1>Mood-to-Music 🎵</h1>
   <p>Type how you're feeling. We'll find you a vibe.</p>
-  <input id="moodInput" placeholder="I'm feeling happy, chill..." />
+
+  <input id="moodInput" placeholder="I'm feeling confident, mellow, hyped..." />
   <button onclick="generatePlaylists()">Find Playlists</button>
+
   <div id="results"></div>
 
   <script>
-  async function generatePlaylists() {
-    const mood = document.getElementById('moodInput').value;
-    const results = document.getElementById('results');
-    results.innerHTML = "Thinking... 🎧";
+    async function generatePlaylists() {
+      const mood = document.getElementById('moodInput').value;
+      const results = document.getElementById('results');
+      results.innerHTML = "Thinking... 🎧";
 
-    try {
-      const res = await fetch("/api/generate-playlist", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ mood })
-      });
+      try {
+        const res = await fetch("/api/generate-playlist", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ mood })
+        });
 
-      if (!res.ok) {
-        throw new Error("API call failed");
+        if (!res.ok) {
+          throw new Error("API call failed");
+        }
+
+        const playlists = await res.json();
+        results.innerHTML = "";
+
+        playlists.forEach(pl => {
+          results.innerHTML += `
+            <div class="playlist">
+              <strong>${pl.name}</strong>
+              <a href="${pl.url}" target="_blank">Listen on Spotify</a>
+            </div>`;
+        });
+
+      } catch (err) {
+        console.error(err);
+        results.innerHTML = "Oops, something went wrong.";
       }
-
-      const playlists = await res.json();
-      results.innerHTML = "";
-
-      playlists.forEach(pl => {
-        results.innerHTML += `
-          <div class="playlist">
-            <strong>${pl.name}</strong><br/>
-            <a href="${pl.url}" target="_blank">Listen on Spotify</a>
-          </div>`;
-      });
-
-    } catch (err) {
-      console.error(err);
-      results.innerHTML = "Oops, something went wrong.";
     }
-  }
-</script>
+  </script>
 </body>
 </html>
