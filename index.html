@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mood Playlist Generator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #1e1e1e;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      width: 300px;
+      font-size: 16px;
+    }
+    .playlist {
+      margin-top: 20px;
+      border: 1px solid #444;
+      padding: 10px;
+      width: 320px;
+      background: #2c2c2c;
+    }
+    .playlist a {
+      color: #1db954;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mood-to-Music 🎵</h1>
+  <p>Type how you're feeling. We'll find you a vibe.</p>
+  <input id="moodInput" placeholder="I'm feeling happy, chill..." />
+  <button onclick="generatePlaylists()">Find Playlists</button>
+  <div id="results"></div>
+
+  <script>
+    async function generatePlaylists() {
+      const mood = document.getElementById('moodInput').value;
+      const results = document.getElementById('results');
+      results.innerHTML = "Thinking... 🎧";
+
+      const prompt = `Suggest 3 Spotify playlist names with public links based on this mood: "${mood}". Respond in JSON like:
+[
+  {"name": "Chill Vibes", "url": "https://open.spotify.com/playlist/xyz"},
+  {"name": "Energy Boost", "url": "https://open.spotify.com/playlist/abc"},
+  {"name": "Late Night", "url": "https://open.spotify.com/playlist/def"}
+]`;
+
+      try {
+        const res = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer YOUR_API_KEY"
+          },
+          body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.8
+          })
+        });
+
+        const data = await res.json();
+        const text = data.choices[0].message.content;
+
+        let playlists;
+        try {
+          playlists = JSON.parse(text);
+        } catch (e) {
+          results.innerHTML = "Something went wrong with the response.";
+          return;
+        }
+
+        results.innerHTML = "";
+        playlists.forEach(pl => {
+          results.innerHTML += `
+            <div class="playlist">
+              <strong>${pl.name}</strong><br/>
+              <a href="${pl.url}" target="_blank">Listen on Spotify</a>
+            </div>`;
+        });
+
+      } catch (err) {
+        console.error(err);
+        results.innerHTML = "Oops, something broke.";
+      }
+    }
+  </script>
+</body>
+</html>
