@@ -2,230 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mood-to-Music</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #0b0b0b;
-      color: #eee;
-      overflow-x: hidden;
-      overflow-y: hidden;
-      position: relative;
-    }
-
-    canvas#stars, canvas#beatline {
-      position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 0;
-    }
-
-    main {
-      z-index: 2;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding-top: 15vh;
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      color: #c9a3ff;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    h1::after {
-      content: "🎵";
-      animation: bounce 1.4s infinite ease-in-out;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
-    }
-
-    p {
-      margin-top: 0.5rem;
-      font-size: 1.1rem;
-      color: #aaa;
-    }
-
-    input {
-      padding: 12px;
-      width: 280px;
-      font-size: 16px;
-      background: #1a1a1a;
-      border: 1px solid #444;
-      color: #eee;
-      margin-top: 20px;
-      border-radius: 6px;
-    }
-
-    button {
-      padding: 12px;
-      width: 280px;
-      background: #9f6dfd;
-      border: none;
-      color: #fff;
-      font-weight: bold;
-      font-size: 16px;
-      border-radius: 6px;
-      margin-top: 10px;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background: #b78aff;
-    }
-
-    #results {
-      margin-top: 2rem;
-      max-width: 320px;
-      z-index: 3;
-    }
-
-    .playlist {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid #333;
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 5px;
-    }
-
-    .playlist a {
-      color: #1db954;
-      text-decoration: none;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mood-to-Music 🎵</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <canvas id="stars"></canvas>
   <canvas id="beatline"></canvas>
 
   <main>
-    <h1>Mood-to-Music</h1>
+    <h1>Mood-to-Music <span class="emoji">🎵</span></h1>
     <p>Type how you're feeling. We'll find you a vibe.</p>
-    <input id="moodInput" placeholder="I'm feeling confident, mellow, hyped..." />
-    <button onclick="generatePlaylists()">Find Playlists</button>
-    <div id="results"></div>
+    <input type="text" id="mood-input" placeholder="I'm feeling confident, mellow, hyped…" />
+    <button id="generate-btn">Find Playlists</button>
+
+    <div id="playlist-container"></div>
   </main>
 
-  <script>
-    async function generatePlaylists() {
-      const mood = document.getElementById('moodInput').value;
-      const results = document.getElementById('results');
-      results.innerHTML = "Thinking... 🎧";
-
-      try {
-        const res = await fetch("/api/generate-playlist", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ mood })
-        });
-
-        if (!res.ok) throw new Error("API call failed");
-
-        const playlists = await res.json();
-        results.innerHTML = "";
-
-        playlists.forEach(pl => {
-          results.innerHTML += `
-            <div class="playlist">
-              <strong>${pl.name}</strong><br/>
-              <a href="${pl.url}" target="_blank">Listen on Spotify</a>
-            </div>`;
-        });
-
-      } catch (err) {
-        console.error(err);
-        results.innerHTML = "Oops, something went wrong.";
-      }
-    }
-
-    // Starfield background
-    const stars = document.getElementById("stars");
-    const ctxStars = stars.getContext("2d");
-    const starCount = 120;
-    const starArr = [];
-
-    for (let i = 0; i < starCount; i++) {
-      starArr.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
-        radius: Math.random() * 1.2,
-        speed: 0.2 + Math.random() * 0.8,
-      });
-    }
-
-    function drawStars() {
-      ctxStars.clearRect(0, 0, stars.width, stars.height);
-      ctxStars.fillStyle = "#ffffff";
-      starArr.forEach(star => {
-        ctxStars.beginPath();
-        ctxStars.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-        ctxStars.fill();
-        star.y += star.speed;
-        if (star.y > stars.height) {
-          star.y = 0;
-          star.x = Math.random() * stars.width;
-        }
-      });
-      requestAnimationFrame(drawStars);
-    }
-
-    // Beatline animation
-    const beatCanvas = document.getElementById("beatline");
-    const ctx = beatCanvas.getContext("2d");
-
-    function drawBeatline() {
-      ctx.clearRect(0, 0, beatCanvas.width, beatCanvas.height);
-      ctx.strokeStyle = "#39ff14";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-
-      let x = 0;
-      const height = beatCanvas.height;
-      const width = beatCanvas.width;
-      const step = 10;
-      let y = height / 2;
-
-      ctx.moveTo(x, y);
-
-      while (x < width) {
-        const dy = Math.sin((x + Date.now() / 50) * 0.04) * 30 + Math.random() * 5;
-        y = height / 2 + dy;
-        ctx.lineTo(x, y);
-        x += step;
-      }
-
-      ctx.stroke();
-      requestAnimationFrame(drawBeatline);
-    }
-
-    function resizeCanvases() {
-      stars.width = window.innerWidth;
-      stars.height = window.innerHeight;
-      beatCanvas.width = window.innerWidth;
-      beatCanvas.height = 80;
-      beatCanvas.style.bottom = "0";
-    }
-
-    window.addEventListener("resize", resizeCanvases);
-    resizeCanvases();
-    drawStars();
-    drawBeatline();
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
